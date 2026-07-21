@@ -30,10 +30,22 @@ function requireEnv(name: string): string {
   return value;
 }
 
+/**
+ * Normalize a base URL: strip trailing slashes and add a scheme if missing.
+ * `APP_BASE_URL` is commonly set to a bare domain (e.g. `example.vercel.app`);
+ * Strava rejects a redirect_uri without a scheme, so default to https (http for
+ * localhost).
+ */
+export function normalizeBaseUrl(raw: string): string {
+  const base = raw.trim().replace(/\/+$/, "");
+  if (/^https?:\/\//i.test(base)) return base;
+  const isLocal = /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(base);
+  return `${isLocal ? "http" : "https"}://${base}`;
+}
+
 export function getRedirectUri(): string {
-  const base = (process.env.APP_BASE_URL ?? "http://localhost:3000").replace(
-    /\/$/,
-    ""
+  const base = normalizeBaseUrl(
+    process.env.APP_BASE_URL ?? "http://localhost:3000"
   );
   return `${base}/api/auth/callback`;
 }
